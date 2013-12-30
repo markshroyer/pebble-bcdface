@@ -1,0 +1,17 @@
+{
+  "uuid": "4558682c-68ab-4b6b-88ec-436045f349fe",
+  "shortName": "Binary Face",
+  "longName": "Binary Face",
+  "companyName": "Paleogene",
+  "versionCode": 1,
+  "versionLabel": "1.0.0",
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
