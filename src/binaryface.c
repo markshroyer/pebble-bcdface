@@ -1,18 +1,42 @@
 #include <pebble.h>
 
-#define RADIUS 10
+#define SHOW_SECONDS 1
+#define RADIUS 6
 
 static Window *window;
 static Layer *main_layer;
 
+static void draw_digit(GContext *ctx, int16_t x_coord, int bits, int val)
+{
+	GPoint point;
+	int i;
+
+	int mask = 1;
+	for (i = 0; i < bits; i++) {
+		point = GPoint(x_coord, RADIUS * (3 * i + 1));
+		if (mask & val)
+			graphics_fill_circle(ctx, point, RADIUS);
+		else
+			graphics_draw_circle(ctx, point, RADIUS);
+
+		mask <<= 1;
+	}
+}
+
 static void update_proc(Layer *layer, GContext *ctx)
 {
-	time_t now = time(NULL);
+	time_t now_time = time(NULL);
+	struct tm *now = localtime(&now_time);
 
 	graphics_context_set_stroke_color(ctx, GColorWhite);
 	graphics_context_set_fill_color(ctx, GColorWhite);
 
-	graphics_draw_circle(ctx, GPoint(20, 20), RADIUS);
+	draw_digit(ctx, RADIUS,      2, now->tm_hour / 10);
+	draw_digit(ctx, 4 * RADIUS,  4, now->tm_hour % 10);
+	draw_digit(ctx, 7 * RADIUS,  3, now->tm_min / 10);
+	draw_digit(ctx, 10 * RADIUS, 4, now->tm_min % 10);
+	draw_digit(ctx, 13 * RADIUS, 3, now->tm_sec / 10);
+	draw_digit(ctx, 16 * RADIUS, 4, now->tm_sec % 10);
 }
 
 void handle_tick(struct tm *tick_time, TimeUnits units_changed)
