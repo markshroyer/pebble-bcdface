@@ -1,19 +1,21 @@
 #include <pebble.h>
 
 #define SHOW_SECONDS 1
-#define RADIUS 6
+#define RADIUS 8
 
 static Window *window;
 static Layer *main_layer;
 
-static void draw_digit(GContext *ctx, int16_t x_coord, int bits, int val)
+static void draw_digit(Layer *layer, GContext *ctx,
+		       int16_t x_coord, int bits, int val)
 {
+	GRect bounds = layer_get_bounds(layer);
 	GPoint point;
 	int i;
 
 	int mask = 1;
 	for (i = 0; i < bits; i++) {
-		point = GPoint(x_coord, RADIUS * (3 * i + 1));
+		point = GPoint(x_coord, bounds.size.h - RADIUS * (3 * i + 2));
 		if (mask & val)
 			graphics_fill_circle(ctx, point, RADIUS);
 		else
@@ -31,12 +33,12 @@ static void update_proc(Layer *layer, GContext *ctx)
 	graphics_context_set_stroke_color(ctx, GColorWhite);
 	graphics_context_set_fill_color(ctx, GColorWhite);
 
-	draw_digit(ctx, RADIUS,      2, now->tm_hour / 10);
-	draw_digit(ctx, 4 * RADIUS,  4, now->tm_hour % 10);
-	draw_digit(ctx, 7 * RADIUS,  3, now->tm_min / 10);
-	draw_digit(ctx, 10 * RADIUS, 4, now->tm_min % 10);
-	draw_digit(ctx, 13 * RADIUS, 3, now->tm_sec / 10);
-	draw_digit(ctx, 16 * RADIUS, 4, now->tm_sec % 10);
+	draw_digit(layer, ctx, RADIUS,      2, now->tm_hour / 10);
+	draw_digit(layer, ctx, 4 * RADIUS,  4, now->tm_hour % 10);
+	draw_digit(layer, ctx, 7 * RADIUS,  3, now->tm_min  / 10);
+	draw_digit(layer, ctx, 10 * RADIUS, 4, now->tm_min  % 10);
+	draw_digit(layer, ctx, 13 * RADIUS, 3, now->tm_sec  / 10);
+	draw_digit(layer, ctx, 16 * RADIUS, 4, now->tm_sec  % 10);
 }
 
 void handle_tick(struct tm *tick_time, TimeUnits units_changed)
