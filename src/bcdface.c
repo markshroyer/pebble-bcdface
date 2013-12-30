@@ -74,7 +74,7 @@ static void window_load(Window *window) {
 
 	date_layer = text_layer_create((GRect) {
 		.origin = { 0, 0 },
-		.size = { bounds.size.w, 20 }
+		.size = { bounds.size.w, 40 }
 	});
 	main_layer = layer_create((GRect) {
 		.origin = { 0, 0 },
@@ -93,6 +93,7 @@ static void window_load(Window *window) {
 	text_layer_set_background_color(date_layer, GColorBlack);
 	text_layer_set_text_color(date_layer, GColorWhite);
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
+	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 
 	col_spacing = (bounds.size.w - 2 * NUM_COLUMNS * RADIUS) / (NUM_COLUMNS + 1);
 	col_offset = (bounds.size.w - col_spacing * (NUM_COLUMNS - 1) - 2 * NUM_COLUMNS * RADIUS) / 2;
