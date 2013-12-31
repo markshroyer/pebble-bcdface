@@ -14,13 +14,13 @@
 static Window *window = NULL;
 static Layer *main_layer = NULL;
 static TextLayer *date_layer = NULL;
-char *date_str = NULL;
+static char *date_str = NULL;
 
 /* offset of the first column */
-int16_t col_offset;
+static int16_t col_offset;
 
 /* spacing between adjacent columns */
-int16_t col_spacing;
+static int16_t col_spacing;
 
 static void draw_digit(Layer *layer, GContext *ctx,
                        int col, int bits, int val)
