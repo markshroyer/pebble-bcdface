@@ -5,9 +5,11 @@
 #ifdef SHOW_SECONDS
 #define NUM_COLUMNS 6
 #define RADIUS 8
+#define TICK_UNIT SECOND_UNIT
 #else
 #define NUM_COLUMNS 4
 #define RADIUS 10
+#define TICK_UNIT MINUTE_UNIT
 #endif
 
 #define DATE_STR_SZ 11
@@ -74,12 +76,6 @@ static void window_load(Window *window) {
         const GRect bounds = layer_get_bounds(window_layer);
 	const time_t now_time = time(NULL);
 
-	/*
-	 * We'll need this on first call to update_proc(), will
-	 * subsequently be updated by the tick handler
-	 */
-	now = localtime(&now_time);
-
 	col_spacing = (bounds.size.w - 2 * NUM_COLUMNS * RADIUS) / (NUM_COLUMNS + 1);
 	col_offset = (bounds.size.w - col_spacing * (NUM_COLUMNS - 1) - 2 * NUM_COLUMNS * RADIUS) / 2;
 
@@ -104,11 +100,17 @@ static void window_load(Window *window) {
 }
 
 static void window_appear(Window *window) {
-#ifdef SHOW_SECONDS
-	tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
-#else
-	tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
-#endif
+	const time_t now_time = time(NULL);
+
+	tick_timer_service_subscribe(TICK_UNIT, handle_tick);
+
+	/*
+	 * Force immediate redraw so there isn't an annoying pause before
+	 * the date string becomes visible when returning to the watch
+	 * face.  This call is also necessary so that "now" gets set before
+	 * the first run of update_proc()
+	 */
+	handle_tick(localtime(&now_time), TICK_UNIT);
 }
 
 static void window_disappear(Window *window) {
