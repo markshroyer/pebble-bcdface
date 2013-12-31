@@ -26,6 +26,7 @@ static TextLayer *date_layer = NULL;
 static char *date_str = NULL;
 static struct tm *now = NULL;
 #ifdef NOTIFY_DISCONNECT
+static TextLayer *bt_layer = NULL;
 static bool last_bt_state = false;
 #endif
 
@@ -89,6 +90,7 @@ static void handle_bt(bool bt_state)
 		vibes_double_pulse();
 
 	last_bt_state = bt_state;
+	text_layer_set_text(bt_layer, bt_state ? "" : "!!");
 }
 
 #endif /* defined NOTIFY_DISCONNECT */
@@ -100,24 +102,38 @@ static void window_load(Window *window) {
 	col_spacing = (bounds.size.w - 2 * NUM_COLUMNS * RADIUS) / (NUM_COLUMNS + 1);
 	col_offset = (bounds.size.w - col_spacing * (NUM_COLUMNS - 1) - 2 * NUM_COLUMNS * RADIUS) / 2;
 
-	date_layer = text_layer_create((GRect) {
-		.origin = { 0, 0 },
-		.size = { bounds.size.w, 40 }
-	});
 	main_layer = layer_create((GRect) {
 		.origin = { 0, 0 },
 		.size = { bounds.size.w, bounds.size.h }
 	});
+	date_layer = text_layer_create((GRect) {
+		.origin = { 0, 0 },
+		.size = { bounds.size.w, 40 }
+	});
+#ifdef NOTIFY_DISCONNECT
+	bt_layer = text_layer_create((GRect) {
+		.origin = { 10, 5 },
+		.size = { 20, 20 }
+	});
+#endif
 
 	layer_set_update_proc(main_layer, update_proc);
 	layer_add_child(window_layer, main_layer);
 	layer_add_child(window_layer, text_layer_get_layer(date_layer));
+#ifdef NOTIFY_DISCONNECT
+	layer_add_child(window_layer, text_layer_get_layer(bt_layer));
+#endif
 
-	text_layer_set_text(date_layer, "");
 	text_layer_set_background_color(date_layer, GColorBlack);
 	text_layer_set_text_color(date_layer, GColorWhite);
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
 	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+
+#ifdef NOTIFY_DISCONNECT
+	text_layer_set_background_color(bt_layer, GColorBlack);
+	text_layer_set_text_color(bt_layer, GColorWhite);
+	text_layer_set_text_alignment(bt_layer, GTextAlignmentLeft);
+#endif
 }
 
 static void window_appear(Window *window) {
@@ -147,6 +163,9 @@ static void window_disappear(Window *window) {
 }
 
 static void window_unload(Window *window) {
+#ifdef NOTIFY_DISCONNECT
+	text_layer_destroy(bt_layer);
+#endif
 	text_layer_destroy(date_layer);
 	layer_destroy(main_layer);
 }
