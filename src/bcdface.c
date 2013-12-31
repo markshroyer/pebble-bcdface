@@ -118,11 +118,6 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(date_layer, GColorWhite);
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
 	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-
-#ifdef NOTIFY_DISCONNECT
-	bluetooth_connection_service_subscribe(handle_bt);
-	handle_bt(bluetooth_connection_service_peek());
-#endif
 }
 
 static void window_appear(Window *window) {
@@ -137,16 +132,21 @@ static void window_appear(Window *window) {
 	 * the first run of update_proc()
 	 */
 	handle_tick(localtime(&now_time), TICK_UNIT);
+
+#ifdef NOTIFY_DISCONNECT
+	bluetooth_connection_service_subscribe(handle_bt);
+	handle_bt(bluetooth_connection_service_peek());
+#endif
 }
 
 static void window_disappear(Window *window) {
+#ifdef NOTIFY_DISCONNECT
+	bluetooth_connection_service_unsubscribe();
+#endif
 	tick_timer_service_unsubscribe();
 }
 
 static void window_unload(Window *window) {
-#ifdef NOTIFY_DISCONNECT
-	bluetooth_connection_service_unsubscribe();
-#endif
 	text_layer_destroy(date_layer);
 	layer_destroy(main_layer);
 }
