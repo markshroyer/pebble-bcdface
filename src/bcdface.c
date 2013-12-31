@@ -61,7 +61,7 @@ static void update_proc(Layer *layer, GContext *ctx)
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 {
-	now = tick_time; /* TODO is this safe? */
+	now = tick_time; /* TODO is this actually safe? */
 
 	strftime(date_str, DATE_STR_SZ, "%a %b %d", now);
 	text_layer_set_text(date_layer, date_str);
@@ -101,21 +101,21 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(date_layer, GColorWhite);
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
 	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+}
 
+static void window_appear(Window *window) {
 #ifdef SHOW_SECONDS
 	tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
 #else
 	tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
 #endif
+}
 
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "bounds.size.w = %d", bounds.size.w);
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "col_spacing = %d", col_spacing);
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "col_offset = %d", col_offset);
+static void window_disappear(Window *window) {
+	tick_timer_service_unsubscribe();
 }
 
 static void window_unload(Window *window) {
-	/* TODO unsubscribe in disappear handler instead? */
-	tick_timer_service_unsubscribe();
 	text_layer_destroy(date_layer);
 	layer_destroy(main_layer);
 }
@@ -128,6 +128,8 @@ static void init(void) {
         window = window_create();
         window_set_window_handlers(window, (WindowHandlers) {
 		.load = window_load,
+		.appear = window_appear,
+		.disappear = window_disappear,
 		.unload = window_unload,
 	});
         window_set_background_color(window, GColorBlack);
