@@ -1,15 +1,16 @@
 #include <pebble.h>
 
 #define SHOW_SECONDS 1
-#define RADIUS 8
-
-#define DATE_STR_SZ 11
 
 #ifdef SHOW_SECONDS
 #define NUM_COLUMNS 6
+#define RADIUS 8
 #else
 #define NUM_COLUMNS 4
+#define RADIUS 10
 #endif
+
+#define DATE_STR_SZ 11
 
 static Window *window = NULL;
 static Layer *main_layer = NULL;
