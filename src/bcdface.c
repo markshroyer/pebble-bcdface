@@ -16,6 +16,7 @@ static Window *window = NULL;
 static Layer *main_layer = NULL;
 static TextLayer *date_layer = NULL;
 static char *date_str = NULL;
+static struct tm *now = NULL;
 
 /* offset of the first column */
 static int16_t col_offset;
@@ -45,14 +46,8 @@ static void draw_digit(Layer *layer, GContext *ctx,
 
 static void update_proc(Layer *layer, GContext *ctx)
 {
-	const time_t now_time = time(NULL);
-	const struct tm *now = localtime(&now_time);
-
 	graphics_context_set_stroke_color(ctx, GColorWhite);
 	graphics_context_set_fill_color(ctx, GColorWhite);
-
-	strftime(date_str, DATE_STR_SZ, "%a %b %d", now);
-	text_layer_set_text(date_layer, date_str);
 
 	draw_digit(layer, ctx, 0, 2, now->tm_hour / 10);
 	draw_digit(layer, ctx, 1, 4, now->tm_hour % 10);
@@ -64,14 +59,29 @@ static void update_proc(Layer *layer, GContext *ctx)
 #endif
 }
 
-void handle_tick(struct tm *tick_time, TimeUnits units_changed)
+static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 {
+	now = tick_time; /* TODO is this safe? */
+
+	strftime(date_str, DATE_STR_SZ, "%a %b %d", now);
+	text_layer_set_text(date_layer, date_str);
+
 	layer_mark_dirty(main_layer);
 }
 
 static void window_load(Window *window) {
         Layer *window_layer = window_get_root_layer(window);
-        GRect bounds = layer_get_bounds(window_layer);
+        const GRect bounds = layer_get_bounds(window_layer);
+	const time_t now_time = time(NULL);
+
+	/*
+	 * We'll need this on first call to update_proc(), will
+	 * subsequently be updated by the tick handler
+	 */
+	now = localtime(&now_time);
+
+	col_spacing = (bounds.size.w - 2 * NUM_COLUMNS * RADIUS) / (NUM_COLUMNS + 1);
+	col_offset = (bounds.size.w - col_spacing * (NUM_COLUMNS - 1) - 2 * NUM_COLUMNS * RADIUS) / 2;
 
 	date_layer = text_layer_create((GRect) {
 		.origin = { 0, 0 },
@@ -81,11 +91,7 @@ static void window_load(Window *window) {
 		.origin = { 0, 0 },
 		.size = { bounds.size.w, bounds.size.h }
 	});
-#ifdef SHOW_SECONDS
-	tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
-#else
-	tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
-#endif
+
 	layer_set_update_proc(main_layer, update_proc);
 	layer_add_child(window_layer, main_layer);
 	layer_add_child(window_layer, text_layer_get_layer(date_layer));
@@ -96,8 +102,11 @@ static void window_load(Window *window) {
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
 	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 
-	col_spacing = (bounds.size.w - 2 * NUM_COLUMNS * RADIUS) / (NUM_COLUMNS + 1);
-	col_offset = (bounds.size.w - col_spacing * (NUM_COLUMNS - 1) - 2 * NUM_COLUMNS * RADIUS) / 2;
+#ifdef SHOW_SECONDS
+	tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
+#else
+	tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
+#endif
 
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "bounds.size.w = %d", bounds.size.w);
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "col_spacing = %d", col_spacing);
@@ -105,6 +114,7 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
+	/* TODO unsubscribe in disappear handler instead? */
 	tick_timer_service_unsubscribe();
 	text_layer_destroy(date_layer);
 	layer_destroy(main_layer);
