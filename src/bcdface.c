@@ -1,6 +1,11 @@
 #include <pebble.h>
 
-#define SHOW_SECONDS 1
+/* Show seconds place? */
+//#define SHOW_SECONDS
+
+/* Pulse vibrate when phone disconnects? */
+#define NOTIFY_DISCONNECT
+
 
 #ifdef SHOW_SECONDS
 #define NUM_COLUMNS 6
@@ -14,17 +19,22 @@
 
 #define DATE_STR_SZ 11
 
+
 static Window *window = NULL;
 static Layer *main_layer = NULL;
 static TextLayer *date_layer = NULL;
 static char *date_str = NULL;
 static struct tm *now = NULL;
+#ifdef NOTIFY_DISCONNECT
+static bool last_bt_state = false;
+#endif
 
 /* offset of the first column */
 static int16_t col_offset;
 
 /* spacing between adjacent columns */
 static int16_t col_spacing;
+
 
 static void draw_digit(Layer *layer, GContext *ctx,
                        int col, int bits, int val)
@@ -71,10 +81,21 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 	layer_mark_dirty(main_layer);
 }
 
+#ifdef NOTIFY_DISCONNECT
+
+static void handle_bt(bool bt_state)
+{
+	if (last_bt_state && !bt_state)
+		vibes_double_pulse();
+
+	last_bt_state = bt_state;
+}
+
+#endif /* defined NOTIFY_DISCONNECT */
+
 static void window_load(Window *window) {
         Layer *window_layer = window_get_root_layer(window);
         const GRect bounds = layer_get_bounds(window_layer);
-	const time_t now_time = time(NULL);
 
 	col_spacing = (bounds.size.w - 2 * NUM_COLUMNS * RADIUS) / (NUM_COLUMNS + 1);
 	col_offset = (bounds.size.w - col_spacing * (NUM_COLUMNS - 1) - 2 * NUM_COLUMNS * RADIUS) / 2;
@@ -97,6 +118,11 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(date_layer, GColorWhite);
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
 	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+
+#ifdef NOTIFY_DISCONNECT
+	bluetooth_connection_service_subscribe(handle_bt);
+	handle_bt(bluetooth_connection_service_peek());
+#endif
 }
 
 static void window_appear(Window *window) {
@@ -118,6 +144,9 @@ static void window_disappear(Window *window) {
 }
 
 static void window_unload(Window *window) {
+#ifdef NOTIFY_DISCONNECT
+	bluetooth_connection_service_unsubscribe();
+#endif
 	text_layer_destroy(date_layer);
 	layer_destroy(main_layer);
 }
