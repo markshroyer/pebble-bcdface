@@ -96,8 +96,8 @@ static void handle_bt(bool bt_state)
 #endif /* defined NOTIFY_DISCONNECT */
 
 static void window_load(Window *window) {
-        Layer *window_layer = window_get_root_layer(window);
-        const GRect bounds = layer_get_bounds(window_layer);
+	Layer *window_layer = window_get_root_layer(window);
+	const GRect bounds = layer_get_bounds(window_layer);
 
 	col_spacing = (bounds.size.w - 2 * NUM_COLUMNS * RADIUS) / (NUM_COLUMNS + 1);
 	col_offset = (bounds.size.w - col_spacing * (NUM_COLUMNS - 1) - 2 * NUM_COLUMNS * RADIUS) / 2;
@@ -171,18 +171,18 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
-        const bool animated = true;
+	const bool animated = true;
 
 	date_str = malloc(DATE_STR_SZ);
 
-        window = window_create();
-        window_set_window_handlers(window, (WindowHandlers) {
+	window = window_create();
+	window_set_window_handlers(window, (WindowHandlers) {
 		.load = window_load,
 		.appear = window_appear,
 		.disappear = window_disappear,
 		.unload = window_unload,
 	});
-        window_set_background_color(window, GColorBlack);
+	window_set_background_color(window, GColorBlack);
 	window_set_fullscreen(window, true);
 	window_stack_push(window, animated);
 }
