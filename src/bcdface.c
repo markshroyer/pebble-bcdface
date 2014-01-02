@@ -26,7 +26,8 @@ static TextLayer *date_layer = NULL;
 static char *date_str = NULL;
 static struct tm *now = NULL;
 #ifdef NOTIFY_DISCONNECT
-static TextLayer *bt_layer = NULL;
+static GBitmap *bt_bitmap = NULL;
+static BitmapLayer *bt_layer = NULL;
 static bool last_bt_state = false;
 #endif
 
@@ -44,16 +45,15 @@ static void draw_digit(Layer *layer, GContext *ctx,
 	const int16_t x_coord = col_offset + RADIUS + (2 * RADIUS + col_spacing) * col;
 	GPoint point;
 	int i;
-	int mask = 1;
 
 	for (i = 0; i < bits; i++) {
 		point = GPoint(x_coord, bounds.size.h - RADIUS * (3 * i + 2));
-		if (mask & val)
+		if (val & 1)
 			graphics_fill_circle(ctx, point, RADIUS);
 		else
 			graphics_draw_circle(ctx, point, RADIUS);
 
-		mask <<= 1;
+		val >>= 1;
 	}
 }
 
@@ -90,7 +90,7 @@ static void handle_bt(bool bt_state)
 		vibes_double_pulse();
 
 	last_bt_state = bt_state;
-	text_layer_set_text(bt_layer, bt_state ? "" : "!!");
+	layer_set_hidden(bitmap_layer_get_layer(bt_layer), bt_state);
 }
 
 #endif /* defined NOTIFY_DISCONNECT */
@@ -111,29 +111,25 @@ static void window_load(Window *window) {
 		.size = { bounds.size.w, 40 }
 	});
 #ifdef NOTIFY_DISCONNECT
-	bt_layer = text_layer_create((GRect) {
+	bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PHONE);
+	bt_layer = bitmap_layer_create((GRect) {
 		.origin = { 10, 5 },
 		.size = { 20, 20 }
 	});
+	bitmap_layer_set_bitmap(bt_layer, bt_bitmap);
 #endif
 
 	layer_set_update_proc(main_layer, update_proc);
 	layer_add_child(window_layer, main_layer);
 	layer_add_child(window_layer, text_layer_get_layer(date_layer));
 #ifdef NOTIFY_DISCONNECT
-	layer_add_child(window_layer, text_layer_get_layer(bt_layer));
+	layer_add_child(window_layer, bitmap_layer_get_layer(bt_layer));
 #endif
 
 	text_layer_set_background_color(date_layer, GColorBlack);
 	text_layer_set_text_color(date_layer, GColorWhite);
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
 	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-
-#ifdef NOTIFY_DISCONNECT
-	text_layer_set_background_color(bt_layer, GColorBlack);
-	text_layer_set_text_color(bt_layer, GColorWhite);
-	text_layer_set_text_alignment(bt_layer, GTextAlignmentLeft);
-#endif
 }
 
 static void window_appear(Window *window) {
@@ -164,7 +160,8 @@ static void window_disappear(Window *window) {
 
 static void window_unload(Window *window) {
 #ifdef NOTIFY_DISCONNECT
-	text_layer_destroy(bt_layer);
+	bitmap_layer_destroy(bt_layer);
+	gbitmap_destroy(bt_bitmap);
 #endif
 	text_layer_destroy(date_layer);
 	layer_destroy(main_layer);
