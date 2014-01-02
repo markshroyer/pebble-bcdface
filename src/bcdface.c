@@ -1,7 +1,7 @@
 #include <pebble.h>
 
 /* Show seconds place? */
-//#define SHOW_SECONDS
+/* #define SHOW_SECONDS */
 
 /* Pulse vibrate when phone disconnects? */
 #define NOTIFY_DISCONNECT
@@ -168,8 +168,6 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
-	const bool animated = true;
-
 	date_str = malloc(DATE_STR_SZ);
 
 	window = window_create();
@@ -181,7 +179,7 @@ static void init(void) {
 	});
 	window_set_background_color(window, GColorBlack);
 	window_set_fullscreen(window, true);
-	window_stack_push(window, animated);
+	window_stack_push(window, true);
 }
 
 static void deinit(void) {
