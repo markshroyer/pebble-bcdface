@@ -113,7 +113,7 @@ static void window_load(Window *window) {
 #ifdef NOTIFY_DISCONNECT
 	bt_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PHONE);
 	bt_layer = bitmap_layer_create((GRect) {
-		.origin = { 10, 5 },
+		.origin = { 0, 6 },
 		.size = { 20, 20 }
 	});
 	bitmap_layer_set_bitmap(bt_layer, bt_bitmap);
